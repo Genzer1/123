@@ -1,0 +1,245 @@
+program CarsDB;
+
+type
+  cars = record
+    name: string;
+    price: real;
+    year: integer;
+  end;
+
+  list = record
+    info: cars;
+    next: ^list;
+  end;
+  plist = ^list;
+
+var
+  Item: plist;
+  first: plist;
+  f: file of cars;
+  c: cars;
+  choice: Integer;
+  name: string;
+  year: integer;
+  maxPrice, minYear: real;
+
+function createNewItem(): plist;
+var
+  item: plist;
+begin
+  new(item);
+  writeln('Введите название автомобиля');
+  readln(item^.info.name);
+  writeln('Введите цену');
+  readln(item^.info.price);
+  writeln('Введите год');
+  readln(item^.info.year);
+  item^.next := nil;
+  createNewItem := item;
+end;
+
+procedure addEndList(item: plist; var first: plist);
+var
+  temp: plist;
+begin
+  if first = nil then
+    first := item
+  else
+  begin
+    temp := first;
+    while temp^.next <> nil do
+      temp := temp^.next;
+    temp^.next := item;
+  end;
+end;
+
+procedure printAllItems();
+var
+  t: plist;
+begin
+  t := first;
+  writeln('----------------------------------------------');
+  writeln('| Название |   Цена   |  Год выпуска |');
+  writeln('----------------------------------------------');
+  while t <> nil do
+  begin
+    writeln('| ', t^.info.name:10, ' | ', t^.info.price:6:2, ' руб. | ', t^.info.year:12, ' |');
+    t := t^.next;
+  end;
+  writeln('----------------------------------------------');
+end;
+
+procedure saveDB();
+var
+  t: plist;
+begin
+  if first = nil then
+    exit;
+  assign(f, 'DataBase');
+  rewrite(f);
+  t := first;
+  while t <> nil do
+  begin
+    c := t^.info;
+    write(f, c);
+    t := t^.next;
+  end;
+  close(f);
+end;
+
+function createNewItemFromFile(c: cars): plist;
+var
+  item: plist;
+begin
+  new(item);
+  item^.info := c;
+  item^.next := nil;
+  createNewItemFromFile := item;
+end;
+
+function readDB(): plist;
+var
+  item, first: plist;
+begin
+  first := nil;
+  assign(f, 'dataBase');
+  reset(f);
+  while not eof(f) do
+  begin
+    read(f, c);
+    item := createNewItemFromFile(c);
+    addEndList(item, first);
+  end;
+  close(f);
+  readDB := first;
+end;
+
+function searchByName(name: string): plist;
+var
+  t: plist;
+begin
+  t := first;
+  writeln('----------------------------------------------');
+  writeln('| Название |   Цена   |  Год выпуска |');
+  writeln('----------------------------------------------');
+  while t <> nil do
+  begin
+    if t^.info.name = name then
+      writeln('| ', t^.info.name:10, ' | ', t^.info.price:6:2, ' руб. | ', t^.info.year:12, ' |');
+    t := t^.next;
+  end;
+  writeln('----------------------------------------------');
+  searchByName := first;
+end;
+
+function searchByYear(year: integer): plist;
+var
+  t: plist;
+begin
+  t := first;
+  writeln('----------------------------------------------');
+  writeln('| Название |   Цена   |  Год выпуска |');
+  writeln('----------------------------------------------');
+  while t <> nil do
+  begin
+    if t^.info.year = year then
+      writeln('| ', t^.info.name:10, ' | ', t^.info.price:6:2, ' руб. | ', t^.info.year:12, ' |');
+    t := t^.next;
+  end;
+  writeln('----------------------------------------------');
+  searchByYear := first;
+end;
+
+function searchByPrice(maxPrice: real): plist;
+var
+  t: plist;
+begin
+  t := first;
+  writeln('----------------------------------------------');
+  writeln('| Название |   Цена   |  Год выпуска |');
+  writeln('----------------------------------------------');
+  while t <> nil do
+  begin
+    if t^.info.price <= maxPrice then
+      writeln('| ', t^.info.name:10, ' | ', t^.info.price:6:2, ' руб. | ', t^.info.year:12, ' |');
+    t := t^.next;
+  end;
+  writeln('----------------------------------------------');
+  searchByPrice := first;
+end;
+
+function searchByYearAndPrice(minYear, maxPrice: real): plist;
+var
+  t: plist;
+begin
+  t := first;
+  writeln('----------------------------------------------');
+  writeln('| Название |   Цена   |  Год выпуска |');
+  writeln('----------------------------------------------');
+  while t <> nil do
+  begin
+    if (t^.info.year >= minYear) and (t^.info.price <= maxPrice) then
+      writeln('| ', t^.info.name:10, ' | ', t^.info.price:6:2, ' руб. | ', t^.info.year:12, ' |');
+    t := t^.next;
+  end;
+  writeln('----------------------------------------------');
+  searchByYearAndPrice := first;
+end;
+
+begin
+  first := nil;
+  first := readDB();
+
+  repeat
+    writeln;
+    writeln('1. Добавить новый автомобиль в базу данных');
+    writeln('2. Посмотреть информацию обо всех автомобилях в базе данных');
+    writeln('3. Сохранить базу данных в файл');
+    writeln('4. Загрузить базу данных из файла');
+    writeln('5. Поиск по названию автомобиля');
+    writeln('6. Поиск по году выпуска');
+    writeln('7. Поиск по цене');
+    writeln('8. Поиск по году выпуска и цене');
+    writeln('9. Выход');
+    writeln;
+    Write('Выберите действие (1-9): ');
+    Readln(choice);
+    case choice of
+      1: begin
+        item := createNewItem();
+        addEndList(item, first);
+        writeln('Автомобиль успешно добавлен');
+      end;
+      2: printAllItems();
+      3: saveDB();
+      4: begin
+        first := readDB();
+        writeln('База данных успешно загружена из файла');
+      end;
+      5: begin
+        writeln('Введите название автомобиля: ');
+        readln(name);
+        searchByName(name);
+      end;
+      6: begin
+        writeln('Введите год выпуска: ');
+        readln(year);
+        searchByYear(year);
+      end;
+      7: begin
+        writeln('Введите максимальную цену: ');
+        readln(maxPrice);
+        searchByPrice(maxPrice);
+      end;
+      8: begin
+        writeln('Введите минимальный год выпуска: ');
+        readln(minYear);
+        writeln('Введите максимальную цену: ');
+        readln(maxPrice);
+        searchByYearAndPrice(minYear, maxPrice);
+      end;
+      9: Writeln('Выход из программы');
+      else Writeln('Неверный выбор, попробуйте еще раз');
+    end;
+  until choice = 9;
+end.
